@@ -34,8 +34,11 @@ impl Painter {
 			);
 		}
 		canvas.set_default_scissor_rect();
-		self.paint_jobs.clear();
 		canvas.set_blend_mode(prev_blend);
+	}
+
+	pub fn clear(&mut self) {
+		self.paint_jobs.clear();
 	}
 
 	pub fn update(&mut self, ctx: &mut ggez::Context, scale_factor: f32) {

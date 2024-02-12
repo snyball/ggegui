@@ -102,12 +102,27 @@ impl Gui {
 	}
 
 	pub fn update(&mut self, ctx: &mut ggez::Context) {
+		self.update_input(ctx);
+		self.update_painter(ctx);
+	}
+
+	pub fn update_input(&mut self, ctx: &ggez::Context) {
 		self.input.update(ctx);
+	}
+
+	pub fn update_painter(&mut self, ctx: &mut ggez::Context) {
 		self.painter
 			.lock()
 			.unwrap()
 			.update(ctx, self.input.scale_factor);
-		// self.input.set_scale_factor(1.0, ctx.gfx.size());
+	}
+
+	pub fn begin_frame(&mut self) {
+		self.context.begin_frame(self.input.take());
+	}
+
+	pub fn clear_painter(&mut self) {
+		self.painter.lock().unwrap().clear()
 	}
 
 	/// Return an [`EguiContext`] for update the gui
