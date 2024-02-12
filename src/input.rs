@@ -99,7 +99,7 @@ impl Input {
 	pub fn resize_event(&mut self, w: f32, h: f32) {
 		self.raw.screen_rect = Some(egui::Rect::from_min_size(
 			Default::default(),
-			vec2(w, h) / self.scale_factor,
+			vec2(w, h),
 		));
 	}
 
