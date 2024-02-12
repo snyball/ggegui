@@ -100,6 +100,10 @@ impl Gui {
 		}
 	}
 
+	pub fn clear(&mut self) {
+		self.painter.lock().unwrap().clear()
+	}
+
 	pub fn update(&mut self, ctx: &mut ggez::Context) {
 		self.input.update(ctx);
 		self.painter
