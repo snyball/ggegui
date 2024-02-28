@@ -16,7 +16,7 @@ egui = "0.24.1"
 
 [dependencies.ggez]
 git = "https://github.com/snyball/ggez.git"
-rev = "74ed4c7688cdd03a84c5c98f9c8650ec3947cf07"
+rev = "475afaec6e4749bb98f64b5c8792c9bf94076efd"
 default-features = false
 features = ["audio", "gamepad"]
 
