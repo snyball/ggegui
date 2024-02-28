@@ -3,11 +3,19 @@ use std::collections::{HashMap, LinkedList};
 use ggez::graphics::{self, BlendComponent, BlendFactor, BlendMode, BlendOperation};
 
 #[derive(Default, Clone)]
+struct PixBuf {
+	pix: Vec<u8>,
+	w: usize,
+	h: usize
+}
+
+#[derive(Default, Clone)]
 pub struct Painter {
 	pub(crate) shapes: Vec<egui::ClippedPrimitive>,
 	pub(crate) textures_delta: LinkedList<egui::TexturesDelta>,
 	paint_jobs: Vec<(egui::TextureId, graphics::Mesh, graphics::Rect)>,
 	textures: HashMap<egui::TextureId, graphics::Image>,
+	images: HashMap<egui::TextureId, PixBuf>,
 }
 
 impl Painter {
@@ -100,67 +108,69 @@ impl Painter {
 	) {
 		// set textures
 		for (id, delta) in &textures_delta.set {
-			if delta.pos.is_some() {
+			let pixbuf = PixBuf::from_image_data(&delta.image);
+			if let Some(pos) = delta.pos {
 				eprintln!("Error: Non-zero offset texture updates are not implemented yet");
-				continue;
+				let Some(mut img) = self.images.remove(id) else {
+					eprintln!("Got update request for unknown image");
+					continue;
+				};
+				img.blit(&pixbuf, (pos[0], pos[1]));
+			} else {
+				self.textures.insert(*id, pixbuf.to_texture(ctx));
+				self.images.insert(*id, pixbuf);
 			}
-			let image = match &delta.image {
-				egui::ImageData::Color(image) => color_to_image(image, ctx),
-				egui::ImageData::Font(image) => font_to_image(image, ctx),
-			};
-
-			self.textures.insert(*id, image);
 		}
 
 		// free textures
 		for id in &textures_delta.free {
 			self.textures.remove(id);
+			self.images.remove(id);
 		}
 	}
 }
 
-// Generate Image from egui ColorImage
-fn color_to_image(color: &egui::ColorImage, ctx: &mut ggez::Context) -> graphics::Image {
-	assert_eq!(
-		color.width() * color.height(),
-		color.pixels.len(),
-		"Mismatch between texture size and texel count"
-	);
-
-	let mut pixels: Vec<u8> = Vec::with_capacity(color.pixels.len() * 4);
-
-	for pixel in &color.pixels {
-		pixels.extend(pixel.to_array());
+impl PixBuf {
+	fn from_color(color: &egui::ColorImage) -> Self {
+		let mut pix: Vec<u8> = Vec::with_capacity(color.pixels.len() * 4);
+		for pixel in &color.pixels {
+			pix.extend(pixel.to_array());
+		}
+		Self { pix, w: color.width(), h: color.height() }
 	}
 
-	graphics::Image::from_pixels(
-		ctx,
-		pixels.as_slice(),
-		graphics::ImageFormat::Rgba8UnormSrgb,
-		color.width() as u32,
-		color.height() as u32,
-	)
-}
-
-// Generate Image from egui FontImage
-fn font_to_image(font: &egui::FontImage, ctx: &mut ggez::Context) -> graphics::Image {
-	assert_eq!(
-		font.width() * font.height(),
-		font.pixels.len(),
-		"Mismatch between texture size and texel count"
-	);
-
-	let mut pixels: Vec<u8> = Vec::with_capacity(font.pixels.len() * 4);
-
-	for pixel in font.srgba_pixels(None) {
-		pixels.extend(pixel.to_array());
+	fn from_font(font: &egui::FontImage) -> Self {
+		let mut pix: Vec<u8> = Vec::with_capacity(font.pixels.len() * 4);
+		for pixel in font.srgba_pixels(None) {
+			pix.extend(pixel.to_array());
+		}
+		Self { pix, w: font.width(), h: font.height() }
 	}
 
-	graphics::Image::from_pixels(
-		ctx,
-		pixels.as_slice(),
-		graphics::ImageFormat::Rgba8UnormSrgb,
-		font.width() as u32,
-		font.height() as u32,
-	)
+	fn from_image_data(img: &egui::ImageData) -> Self {
+		match &img {
+			egui::ImageData::Color(image) => Self::from_color(image),
+			egui::ImageData::Font(image) => Self::from_font(image),
+		}
+	}
+
+	fn to_texture(&self, ctx: &mut ggez::Context) -> graphics::Image {
+		graphics::Image::from_pixels(
+			ctx,
+			self.pix.as_slice(),
+			graphics::ImageFormat::Rgba8UnormSrgb,
+			self.w as u32,
+			self.h as u32,
+		)
+	}
+
+	fn blit(&mut self, pix: &PixBuf, pos: (usize, usize)) {
+		for row in pos.1..pos.1+pix.h {
+			let dst = row*self.w + pos.0;
+			let src = row*pix.h;
+			for (i, j) in (dst..dst+pix.w).zip(src..src+pix.w) {
+				println!("{i} <- {j}");
+			}
+		}
+	}
 }

@@ -143,7 +143,7 @@ impl Drawable for Gui {
 			.draw(canvas, self.input.scale_factor);
 	}
 
-	fn dimensions(&self, _gfx: &impl Has<GraphicsContext>) -> Option<graphics::Rect> {
-		None
+	fn dimensions(&self, _gfx: &impl Has<GraphicsContext>) -> graphics::Rect {
+		graphics::Rect::zero() // FIXME
 	}
 }
