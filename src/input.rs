@@ -1,10 +1,8 @@
 use std::time::Instant;
 
 use egui::{pos2, vec2, Key, PointerButton, Pos2, RawInput};
-use ggez::{
-	event::MouseButton,
-	input::keyboard::{KeyCode, KeyMods},
-};
+use winit::{event::MouseButton, keyboard::PhysicalKey};
+use winit::keyboard::{KeyCode, ModifiersState};
 
 /// Contains and manages everything related to the [`egui`] input
 ///
@@ -40,14 +38,14 @@ impl Input {
 	/// use the function [text_input_event](Input:: text_input_event)
 	pub fn update(&mut self, ctx: &ggez::Context) {
 		/*======================= Keyboard =======================*/
-		for key in ctx.keyboard.pressed_keys() {
-			if ctx.keyboard.is_key_just_pressed(*key) {
-				if let Some(key) = translate_keycode(*key) {
+		for key in ctx.keyboard.pressed_physical_keys.iter() {
+			if ctx.keyboard.is_physical_key_just_pressed(key) {
+				if let Some(key) = translate_physical_key(*key) {
 					self.raw.events.push(egui::Event::Key {
 						key,
 						pressed: true,
 						repeat: false,
-						modifiers: translate_modifier(ctx.keyboard.active_mods()),
+						modifiers: translate_modifier(ctx.keyboard.active_modifiers),
 					})
 				}
 			}
@@ -71,7 +69,7 @@ impl Input {
 					},
 					pos: self.pointer_pos,
 					pressed: true,
-					modifiers: translate_modifier(ctx.keyboard.active_mods()),
+					modifiers: translate_modifier(ctx.keyboard.active_modifiers),
 				});
 			} else if ctx.mouse.button_just_released(button) {
 				self.raw.events.push(egui::Event::PointerButton {
@@ -83,7 +81,7 @@ impl Input {
 					},
 					pos: self.pointer_pos,
 					pressed: false,
-					modifiers: translate_modifier(ctx.keyboard.active_mods()),
+					modifiers: translate_modifier(ctx.keyboard.active_modifiers),
 				});
 			}
 		}
@@ -117,60 +115,55 @@ impl Input {
 }
 
 #[inline]
-fn translate_keycode(key: KeyCode) -> Option<egui::Key> {
-	Some(match key {
-		KeyCode::Escape => Key::Escape,
-		KeyCode::Insert => Key::Insert,
-		KeyCode::Home => Key::Home,
-		KeyCode::Delete => Key::Delete,
-		KeyCode::End => Key::End,
-		KeyCode::PageDown => Key::PageDown,
-		KeyCode::PageUp => Key::PageUp,
-		KeyCode::Left => Key::ArrowLeft,
-		KeyCode::Up => Key::ArrowUp,
-		KeyCode::Right => Key::ArrowRight,
-		KeyCode::Down => Key::ArrowDown,
-		KeyCode::Back => Key::Backspace,
-		KeyCode::Return => Key::Enter,
-		KeyCode::Tab => Key::Tab,
-		KeyCode::Space => Key::Space,
+fn translate_physical_key(key: PhysicalKey)-> Option<egui::Key> {
+    let PhysicalKey::Code(key) = key else { return None };
+    Some(match key {
+        KeyCode::Escape => Key::Escape,
+        KeyCode::Insert => Key::Insert,
+        KeyCode::Home => Key::Home,
+        KeyCode::Delete => Key::Delete,
+        KeyCode::End => Key::End,
+        KeyCode::PageDown => Key::PageDown,
+        KeyCode::PageUp => Key::PageUp,
+        KeyCode::ArrowLeft => Key::ArrowLeft,
+        KeyCode::ArrowUp => Key::ArrowUp,
+        KeyCode::ArrowRight => Key::ArrowRight,
+        KeyCode::ArrowDown => Key::ArrowDown,
+        KeyCode::Backspace => Key::Backspace,
+        KeyCode::Enter => Key::Enter,
+        KeyCode::Tab => Key::Tab,
+        KeyCode::Space => Key::Space,
 
-		KeyCode::A => Key::A,
-		KeyCode::K => Key::K,
-		KeyCode::U => Key::U,
-		KeyCode::W => Key::W,
-		KeyCode::Z => Key::Z,
+	KeyCode::KeyA => Key::A,
+	KeyCode::KeyK => Key::K,
+	KeyCode::KeyU => Key::U,
+	KeyCode::KeyW => Key::W,
+	KeyCode::KeyZ => Key::Z,
 
-		_ => {
-			return None;
-		}
-	})
+	_ => {
+	    return None;
+	}
+    })
 }
 
 #[inline]
-fn translate_modifier(keymods: KeyMods) -> egui::Modifiers {
-	egui::Modifiers {
-		alt: keymods.intersects(KeyMods::ALT),
-		ctrl: keymods.intersects(KeyMods::CTRL),
-		shift: keymods.intersects(KeyMods::SHIFT),
-
-		#[cfg(not(target_os = "macos"))]
-		mac_cmd: false,
-		#[cfg(not(target_os = "macos"))]
-		command: keymods.intersects(KeyMods::CTRL),
-
-		#[cfg(target_os = "macos")]
-		mac_cmd: keymods.intersects(KeyMods::LOGO),
-		#[cfg(target_os = "macos")]
-		command: keymods.intersects(KeyMods::LOGO),
-	}
+fn translate_modifier(keymods: ModifiersState) -> egui::Modifiers {
+    egui::Modifiers {
+        alt: keymods.alt_key(),
+        ctrl: keymods.control_key(),
+        shift: keymods.shift_key(),
+        #[cfg(not(target_os = "macos"))] mac_cmd: false,
+        #[cfg(not(target_os = "macos"))] command: keymods.control_key(),
+	#[cfg(target_os = "macos")] mac_cmd: keymods.super_key(),
+	#[cfg(target_os = "macos")] command: keymods.super_key(),
+    }
 }
 
 #[inline]
 fn is_printable(chr: char) -> bool {
-	let is_in_private_use_area = ('\u{e000}'..='\u{f8ff}').contains(&chr)
-		|| ('\u{f0000}'..='\u{ffffd}').contains(&chr)
-		|| ('\u{100000}'..='\u{10fffd}').contains(&chr);
+    let is_in_private_use_area = ('\u{e000}'..='\u{f8ff}').contains(&chr)
+	|| ('\u{f0000}'..='\u{ffffd}').contains(&chr)
+	|| ('\u{100000}'..='\u{10fffd}').contains(&chr);
 
 	!is_in_private_use_area && !chr.is_ascii_control()
 }

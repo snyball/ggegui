@@ -11,12 +11,12 @@ description = "A simple implementation of egui for ggez"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-egui = "0.24.1"
-#ggez = "0.9.1"
+egui = "0.24"
+winit = { version = "0.29", features = ["serde"] }
 
 [dependencies.ggez]
 git = "https://github.com/snyball/ggez.git"
-rev = "475afaec6e4749bb98f64b5c8792c9bf94076efd"
+rev = "9a6371dc608337ebff7b9ff42f55b831b62f91b8"
 default-features = false
 features = ["audio", "gamepad"]
 
