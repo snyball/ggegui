@@ -15,8 +15,7 @@ egui = "0.24"
 winit = { version = "0.29", features = ["serde"] }
 
 [dependencies.ggez]
-git = "https://github.com/snyball/ggez.git"
-rev = "9a6371dc608337ebff7b9ff42f55b831b62f91b8"
+path = "../ggez"
 default-features = false
 features = ["audio", "gamepad"]
 
