@@ -24,22 +24,22 @@ pub struct GuiContext {
 impl Deref for GuiContext {
     type Target = egui::Context;
     fn deref(&self) -> &Self::Target {
-	&self.context
+        &self.context
     }
 }
 
 impl Drop for GuiContext {
     fn drop(&mut self) {
-	let egui::FullOutput {
-	    textures_delta,
-	    shapes,
-	    pixels_per_point,
-	    ..
-	} = self.context.end_frame();
+        let egui::FullOutput {
+            textures_delta,
+            shapes,
+            pixels_per_point,
+            ..
+        } = self.context.end_frame();
 
-	let mut painter = self.painter.lock().unwrap();
-	painter.shapes = self.context.tessellate(shapes, pixels_per_point);
-	painter.textures_delta.push_front(textures_delta);
+        let mut painter = self.painter.lock().unwrap();
+        painter.shapes = self.context.tessellate(shapes, pixels_per_point);
+        painter.textures_delta.push_front(textures_delta);
     }
 }
 
@@ -92,58 +92,58 @@ pub struct Gui {
 impl Gui {
     /// Create a [`Gui`] with extra information for use the [`Input::set_scale_factor`]
     pub fn new(ctx: &ggez::Context) -> Self {
-	let mut input = Input::default();
-	let (w, h) = ctx.gfx.size();
-	input.set_scale_factor(1.0, (w, h));
-	Self {
-	    input,
-	    ..Default::default()
-	}
+        let mut input = Input::default();
+        let (w, h) = ctx.gfx.size();
+        input.set_scale_factor(1.0, (w, h));
+        Self {
+            input,
+            ..Default::default()
+        }
     }
 
     pub fn update(&mut self, ctx: &mut ggez::Context) {
-	self.update_input(ctx);
-	self.update_painter(ctx);
+        self.update_input(ctx);
+        self.update_painter(ctx);
     }
 
     pub fn update_input(&mut self, ctx: &ggez::Context) {
-	self.input.update(ctx);
+        self.input.update(ctx);
     }
 
     pub fn update_painter(&mut self, ctx: &mut ggez::Context) {
-	self.painter
-	    .lock()
-	    .unwrap()
-	    .update(ctx, self.input.scale_factor);
+        self.painter
+            .lock()
+            .unwrap()
+            .update(ctx, self.input.scale_factor);
     }
 
     pub fn begin_frame(&mut self) {
-	self.context.begin_frame(self.input.take());
+        self.context.begin_frame(self.input.take());
     }
 
     pub fn clear_painter(&mut self) {
-	self.painter.lock().unwrap().clear()
+        self.painter.lock().unwrap().clear()
     }
 
     /// Return an [`EguiContext`] for update the gui
     pub fn ctx(&mut self) -> GuiContext {
-	self.context.begin_frame(self.input.take());
-	GuiContext {
-	    context: self.context.clone(),
-	    painter: self.painter.clone(),
-	}
+        self.context.begin_frame(self.input.take());
+        GuiContext {
+            context: self.context.clone(),
+            painter: self.painter.clone(),
+        }
     }
 }
 
 impl Drawable for Gui {
     fn draw(&self, canvas: &mut Canvas, _param: impl Into<DrawParam>) {
-	self.painter
-	    .lock()
-	    .unwrap()
-	    .draw(canvas, self.input.scale_factor);
+        self.painter
+            .lock()
+            .unwrap()
+            .draw(canvas, self.input.scale_factor);
     }
 
     fn dimensions(&self, _gfx: &impl Has<GraphicsContext>) -> graphics::Rect {
-	graphics::Rect::zero() // FIXME
+        graphics::Rect::zero() // FIXME
     }
 }
