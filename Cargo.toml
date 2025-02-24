@@ -12,11 +12,11 @@ description = "A simple implementation of egui for ggez"
 
 [dependencies]
 egui = "0.24"
-winit = { version = "0.29", features = ["serde"] }
+winit = { version = "0.30", features = ["serde"] }
 
 [dependencies.ggez]
 git = "https://github.com/snyball/ggez.git"
-rev = "9a6371dc608337ebff7b9ff42f55b831b62f91b8"
+rev = "ddaf80eeb1a67376a480cd9569a09b5a146fb806"
 default-features = false
 features = ["audio", "gamepad"]
 
